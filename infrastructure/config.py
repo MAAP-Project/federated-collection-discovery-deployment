@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
@@ -12,14 +10,20 @@ class AppConfig(BaseSettings):
         description="Project ID", default="federated-collection-discovery-api"
     )
     stage: str = Field(description="Stage of deployment", default="test")
-    stac_api_urls: Optional[str] = Field(
-        description="Comma separated list of STAC API urls to include in the federated "
-        "collection discovery app"
+    api_version: str = Field(
+        description="Version of federated-collection-discovery "
+        "application to install",
+        default="0.1.0",
     )
-    cmr_urls: Optional[str] = Field(
+    stac_api_urls: str = Field(
+        description="Comma separated list of STAC API urls to include in the federated "
+        "collection discovery app",
+        default="",
+    )
+    cmr_urls: str = Field(
         description="Comma separated list of CMR urls to include in the federated "
         "collection discovery app",
-        default=None,
+        default="",
     )
 
     model_config = SettingsConfigDict(
