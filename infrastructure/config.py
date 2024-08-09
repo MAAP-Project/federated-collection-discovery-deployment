@@ -7,7 +7,7 @@ from pydantic_settings import (
 
 class AppConfig(BaseSettings):
     project_id: str = Field(
-        description="Project ID", default="federated-collection-discovery-api"
+        description="Project ID", default="federated-collection-discovery"
     )
     stage: str = Field(description="Stage of deployment", default="test")
     api_version: str = Field(

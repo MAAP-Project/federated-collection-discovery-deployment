@@ -209,3 +209,4 @@ venv
 # CDK
 .env-cdk
 cdk.out/
+cdk-output.json
