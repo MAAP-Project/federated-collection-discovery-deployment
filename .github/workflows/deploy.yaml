@@ -47,8 +47,6 @@ jobs:
 
     - name: Set up Python
       uses: actions/setup-python@v5
-      env:
-        POETRY_VIRTUALENVS_IN_PROJECT: "true"
       with:
         python-version: "3.12"
         cache: poetry
@@ -63,7 +61,7 @@ jobs:
 
     - name: Install deployment dependencies
       run: | 
-        npm install -g aws-cdk
+        npm install
         poetry install
 
     - name: Run CDK deploy
