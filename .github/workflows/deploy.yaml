@@ -23,5 +23,65 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Checkout client repository
+      uses: actions/checkout@v4
+      with:
+        repository: developmentseed/federated-collection-discovery
+        path: client_app
+        sparse-checkout: src/client
+        ref: "${{ github.event.inputs.api_version }}"
+ 
+    - name: Set up node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Install Yarn
+      run: npm install -g yarn
+
+    - name: Install Poetry
+      uses: Gr1N/setup-poetry@v9
+      with:
+        poetry-version: "1.8.0"
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      env:
+        POETRY_VIRTUALENVS_IN_PROJECT: "true"
+      with:
+        python-version: "3.12"
+        cache: poetry
+        cache-dependency-path: poetry.lock
+
+    - name: Assume Github OIDC role
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: us-west-2
+        role-to-assume: ${{ vars.DEPLOY_ROLE }}
+        role-session-name: federated-collection-discovery-${{ github.event.inputs.deployment_environment }}-deploy
+
+    - name: Install deployment dependencies
+      run: | 
+        npm install
+        poetry install
+
+    - name: Run CDK deploy
+      env:
+        STAGE: "${{ github.event.inputs.deployment_environment }}"
+        API_VERSION: "${{ github.event.inputs.api_version }}"
+      run: |
+        cdk deploy --all --require-approval never --outputs-file cdk-output.json
+        export STACK_NAME=$(jq -r 'keys_unsorted[0]' cdk-output.json)
+        export REACT_APP_API_URL=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ApiEndpoint' cdk-output.json)
+        echo "REACT_APP_API_URL=$REACT_APP_API_URL" >> $GITHUB_ENV
+        export BUCKET_NAME=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ClientBucketName' cdk-output.json)
+        echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+
+    - name: Build and deploy client app
+      working-directory: client_app/src/client
+      run: | 
+        yarn build
+        aws s3 sync ./build s3://${BUCKET_NAME}
     
 
