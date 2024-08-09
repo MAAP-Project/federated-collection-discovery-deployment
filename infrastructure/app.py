@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_apigatewayv2,
     aws_apigatewayv2_integrations,
     aws_cloudfront,
+    aws_iam,
     aws_lambda,
     aws_logs,
     aws_s3,
@@ -66,17 +67,24 @@ class FederatedCollectionSearchStack(Stack):
         )
 
         # S3 bucket and CloudFront distribution for hosting the client application
+        oai = aws_cloudfront.OriginAccessIdentity(self, f"{id}-oai")
         client_bucket = aws_s3.Bucket(
             self,
             f"{id}-client-bucket",
             website_index_document="index.html",
             website_error_document="index.html",
-            public_read_access=True,
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
-            block_public_access=aws_s3.BlockPublicAccess.BLOCK_ACLS,
         )
 
+        client_bucket.add_to_resource_policy(
+            aws_iam.PolicyStatement(
+                effect=aws_iam.Effect.ALLOW,
+                actions=["s3:GetObject"],
+                resources=[client_bucket.arn_for_objects("*")],
+                principals=[oai.grant_principal],
+            )
+        )
         CfnOutput(self, "ClientBucketName", value=client_bucket.bucket_name)
 
         distribution = aws_cloudfront.CloudFrontWebDistribution(
@@ -85,7 +93,8 @@ class FederatedCollectionSearchStack(Stack):
             origin_configs=[
                 aws_cloudfront.SourceConfiguration(
                     s3_origin_source=aws_cloudfront.S3OriginConfig(
-                        s3_bucket_source=client_bucket
+                        s3_bucket_source=client_bucket,
+                        origin_access_identity=oai,
                     ),
                     behaviors=[aws_cloudfront.Behavior(is_default_behavior=True)],
                 )

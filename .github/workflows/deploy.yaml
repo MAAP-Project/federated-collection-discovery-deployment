@@ -68,6 +68,7 @@ jobs:
       env:
         STAGE: "${{ github.event.inputs.deployment_environment }}"
         API_VERSION: "${{ github.event.inputs.api_version }}"
+        STAC_API_URLS: ${{ vars.STAC_API_URLS }}
       run: |
         poetry run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
         export STACK_NAME=$(jq -r 'keys_unsorted[0]' cdk-output.json)
