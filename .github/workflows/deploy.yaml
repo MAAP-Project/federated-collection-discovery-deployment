@@ -61,7 +61,7 @@ jobs:
 
     - name: Install deployment dependencies
       run: | 
-        npm install
+        npm install -g aws-cdk
         poetry install
 
     - name: Run CDK deploy
