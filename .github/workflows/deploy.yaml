@@ -1,0 +1,27 @@
+name: deploy
+
+permissions:
+  id-token: write  # required for requesting the JWT
+  contents: read  # required for actions/checkout
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_environment:
+        description: 'environment'
+        required: true
+      api_version:
+        description: 'federated collection discovery API version'
+        required: true
+        default: '0.1.0'
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    environment: "${{ github.event.inputs.deployment_environment }}"
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+
