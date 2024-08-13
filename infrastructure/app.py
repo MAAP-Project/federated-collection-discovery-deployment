@@ -2,6 +2,7 @@ import aws_cdk as cdk
 from aws_cdk import (
     CfnOutput,
     Duration,
+    Environment,
     RemovalPolicy,
     Stack,
     aws_apigatewayv2,
@@ -178,6 +179,7 @@ app_config = AppConfig()
 FederatedCollectionSearchStack(
     app,
     app_config=app_config,
+    env=Environment(),
 )
 
 app.synth()
