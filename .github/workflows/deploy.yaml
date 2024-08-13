@@ -61,7 +61,8 @@ jobs:
 
     - name: Install deployment dependencies
       run: | 
-        make install
+        npm install
+        poetry install
         cd client_app/src/client
         yarn install
 
