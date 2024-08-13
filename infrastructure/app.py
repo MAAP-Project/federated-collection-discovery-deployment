@@ -1,3 +1,5 @@
+import os
+
 import aws_cdk as cdk
 from aws_cdk import (
     CfnOutput,
@@ -21,7 +23,7 @@ from constructs import Construct
 
 
 class FederatedCollectionSearchStack(Stack):
-    def __init__(
+    def __init__(  # type: ignore
         self,
         scope: Construct,
         app_config: AppConfig,
@@ -179,7 +181,9 @@ app_config = AppConfig()
 FederatedCollectionSearchStack(
     app,
     app_config=app_config,
-    env=Environment(),
+    env=Environment(
+        account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")
+    ),
 )
 
 app.synth()
