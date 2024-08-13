@@ -182,7 +182,7 @@ FederatedCollectionSearchStack(
     app,
     app_config=app_config,
     env=Environment(
-        account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")
+        account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("AWS_REGION")
     ),
 )
 
