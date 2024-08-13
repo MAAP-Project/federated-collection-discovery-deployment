@@ -32,13 +32,6 @@ class FederatedCollectionSearchStack(Stack):
         id = f"{app_config.project_id}-{app_config.stage}"
         super().__init__(scope, id, **kwargs)
 
-        if app_config.certificate_arn:
-            certificate = aws_certificatemanager.Certificate.from_certificate_arn(
-                self, "Certificate", app_config.certificate_arn
-            )
-        else:
-            certificate = None
-
         discovery_lambda = aws_lambda.Function(
             self,
             f"{id}-lambda",
@@ -61,13 +54,16 @@ class FederatedCollectionSearchStack(Stack):
             log_retention=aws_logs.RetentionDays.ONE_WEEK,
         )
 
-        if app_config.api_domain_name and certificate:
+        if app_config.api_domain_name and app_config.api_certificate_arn:
+            api_certificate = aws_certificatemanager.Certificate.from_certificate_arn(
+                self, "APICertificate", app_config.api_certificate_arn
+            )
             default_domain_mapping = aws_apigatewayv2.DomainMappingOptions(
                 domain_name=aws_apigatewayv2.DomainName(
                     self,
                     "ApiDomainName",
                     domain_name=app_config.api_domain_name,
-                    certificate=certificate,
+                    certificate=api_certificate,
                 )
             )
         else:
@@ -113,9 +109,14 @@ class FederatedCollectionSearchStack(Stack):
         )
         CfnOutput(self, "ClientBucketName", value=client_bucket.bucket_name)
 
-        if app_config.client_domain_name and certificate:
+        if app_config.client_domain_name and app_config.client_certificate_arn:
+            client_certificate = (
+                aws_certificatemanager.Certificate.from_certificate_arn(
+                    self, "ClientCertificate", app_config.client_certificate_arn
+                )
+            )
             viewer_certificate = aws_cloudfront.ViewerCertificate.from_acm_certificate(
-                certificate, aliases=[app_config.client_domain_name]
+                client_certificate, aliases=[app_config.client_domain_name]
             )
         else:
             viewer_certificate = None

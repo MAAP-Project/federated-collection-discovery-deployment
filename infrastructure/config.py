@@ -36,23 +36,37 @@ class AppConfig(BaseSettings):
         description="Custom domain name for the client application",
         default=None,
     )
-    certificate_arn: Optional[str] = Field(
+    api_certificate_arn: Optional[str] = Field(
+        description="arn for the certificate for the custom domains",
+        default=None,
+    )
+    client_certificate_arn: Optional[str] = Field(
         description="arn for the certificate for the custom domains",
         default=None,
     )
 
     @model_validator(mode="after")
     def validate_model(self) -> Self:
-        if self.certificate_arn is None and any(
-            [
-                self.api_domain_name,
-                self.client_domain_name,
-            ]
-        ):
+        if self.api_certificate_arn is None and self.api_domain_name:
             raise ValueError(
-                "If any custom domain is provided, certificate_arn must be provided"
+                "If a custom domain is provided for the api, api_certificate_arn must "
+                "be provided"
             )
 
+        if self.client_certificate_arn:
+            if "us-east-1" not in self.client_certificate_arn:
+                raise ValueError(
+                    "client_certificate_arn must be in us-east-1 for use in "
+                    "CloudFront.",
+                    "The provided certificate is not in us-east-1: ",
+                    self.client_certificate_arn,
+                )
+
+        if self.client_certificate_arn is None and self.client_domain_name:
+            raise ValueError(
+                "If a custom domain is provided for the client, client_certificate_arn "
+                "must be provided"
+            )
         return self
 
     model_config = SettingsConfigDict(

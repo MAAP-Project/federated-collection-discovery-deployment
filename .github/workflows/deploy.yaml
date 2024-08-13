@@ -70,9 +70,10 @@ jobs:
       env:
         STAGE: "${{ github.event.inputs.deployment_environment }}"
         API_VERSION: "${{ github.event.inputs.api_version }}"
-        CERTIFICATE_ARN: "${{ vars.CERTIFICATE_ARN }}"
-        CLIENT_DOMAIN_NAME: "${{ vars.CLIENT_DOMAIN_NAME }}"
+        API_CERTIFICATE_ARN: "${{ vars.API_CERTIFICATE_ARN }}"
         API_DOMAIN_NAME: "${{ vars.API_DOMAIN_NAME }}"
+        CLIENT_CERTIFICATE_ARN: "${{ vars.CLIENT_CERTIFICATE_ARN }}"
+        CLIENT_DOMAIN_NAME: "${{ vars.CLIENT_DOMAIN_NAME }}"
         STAC_API_URLS: ${{ vars.STAC_API_URLS }}
       run: |
         poetry run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
