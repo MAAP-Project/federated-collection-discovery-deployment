@@ -6,10 +6,13 @@ from aws_cdk import (
     Stack,
     aws_apigatewayv2,
     aws_apigatewayv2_integrations,
+    aws_certificatemanager,
     aws_cloudfront,
     aws_iam,
     aws_lambda,
     aws_logs,
+    aws_route53,
+    aws_route53_targets,
     aws_s3,
 )
 from config import AppConfig
@@ -25,6 +28,13 @@ class FederatedCollectionSearchStack(Stack):
     ) -> None:
         id = f"{app_config.project_id}-{app_config.stage}"
         super().__init__(scope, id, **kwargs)
+
+        if app_config.certificate_arn:
+            certificate = aws_certificatemanager.Certificate.from_certificate_arn(
+                self, "Certificate", app_config.certificate_arn
+            )
+        else:
+            certificate = None
 
         discovery_lambda = aws_lambda.Function(
             self,
@@ -48,6 +58,18 @@ class FederatedCollectionSearchStack(Stack):
             log_retention=aws_logs.RetentionDays.ONE_WEEK,
         )
 
+        if app_config.api_domain_name and certificate:
+            default_domain_mapping = aws_apigatewayv2.DomainMappingOptions(
+                domain_name=aws_apigatewayv2.DomainName(
+                    self,
+                    "ApiDomainName",
+                    domain_name=app_config.api_domain_name,
+                    certificate=certificate,
+                )
+            )
+        else:
+            default_domain_mapping = None
+
         discovery_api = aws_apigatewayv2.HttpApi(
             self,
             f"{id}-endpoint",
@@ -55,6 +77,7 @@ class FederatedCollectionSearchStack(Stack):
                 f"{id}-api-integration",
                 handler=discovery_lambda,
             ),
+            default_domain_mapping=default_domain_mapping,
         )
 
         if not discovery_api.url:
@@ -87,6 +110,13 @@ class FederatedCollectionSearchStack(Stack):
         )
         CfnOutput(self, "ClientBucketName", value=client_bucket.bucket_name)
 
+        if app_config.client_domain_name and certificate:
+            viewer_certificate = aws_cloudfront.ViewerCertificate.from_acm_certificate(
+                certificate, aliases=[app_config.client_domain_name]
+            )
+        else:
+            viewer_certificate = None
+
         distribution = aws_cloudfront.CloudFrontWebDistribution(
             self,
             f"{id}-client-cloudfront",
@@ -104,12 +134,41 @@ class FederatedCollectionSearchStack(Stack):
                     error_code=404, response_code=200, response_page_path="/index.html"
                 )
             ],
+            viewer_certificate=viewer_certificate,
         )
+        CfnOutput(
+            self,
+            "CloudFrontId",
+            value=distribution.distribution_id,
+        )
+
+        if app_config.client_domain_name:
+            domain_name_parts = app_config.client_domain_name.split(".")
+            domain_root = ".".join(domain_name_parts[-2:])
+            record_name = ".".join(domain_name_parts[:-2])
+
+            hosted_zone = aws_route53.HostedZone.from_lookup(
+                self, "HostedZone", domain_name=domain_root
+            )
+
+            aws_route53.ARecord(
+                self,
+                "AliasRecord",
+                record_name=record_name,
+                zone=hosted_zone,
+                target=aws_route53.RecordTarget.from_alias(
+                    aws_route53_targets.CloudFrontTarget(distribution)
+                ),
+            )
+
+            client_url = app_config.client_domain_name
+        else:
+            client_url = f"https://{distribution.distribution_domain_name}"
 
         CfnOutput(
             self,
             "ClientUrl",
-            value=f"https://{distribution.distribution_domain_name}",
+            value=client_url,
         )
 
 

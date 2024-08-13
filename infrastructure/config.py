@@ -1,8 +1,11 @@
-from pydantic import Field
+from typing import Optional
+
+from pydantic import Field, model_validator
 from pydantic_settings import (
     BaseSettings,
     SettingsConfigDict,
 )
+from typing_extensions import Self
 
 
 class AppConfig(BaseSettings):
@@ -25,6 +28,32 @@ class AppConfig(BaseSettings):
         "collection discovery app",
         default="",
     )
+    api_domain_name: Optional[str] = Field(
+        description="Custom domain name for the API endpoint",
+        default=None,
+    )
+    client_domain_name: Optional[str] = Field(
+        description="Custom domain name for the client application",
+        default=None,
+    )
+    certificate_arn: Optional[str] = Field(
+        description="arn for the certificate for the custom domains",
+        default=None,
+    )
+
+    @model_validator(mode="after")
+    def validate_model(self) -> Self:
+        if self.certificate_arn is None and any(
+            [
+                self.api_domain_name,
+                self.client_domain_name,
+            ]
+        ):
+            raise ValueError(
+                "If any custom domain is provided, certificate_arn must be provided"
+            )
+
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env-cdk", yaml_file="config.yaml", extra="allow"

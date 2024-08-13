@@ -61,8 +61,7 @@ jobs:
 
     - name: Install deployment dependencies
       run: | 
-        npm install
-        poetry install
+        make install
         cd client_app/src/client
         yarn install
 
@@ -70,6 +69,9 @@ jobs:
       env:
         STAGE: "${{ github.event.inputs.deployment_environment }}"
         API_VERSION: "${{ github.event.inputs.api_version }}"
+        CERTIFICATE_ARN: "${{ vars.CERTIFICATE_ARN }}"
+        CLIENT_DOMAIN_NAME: "${{ vars.CLIENT_DOMAIN_NAME }}"
+        API_DOMAIN_NAME: "${{ vars.API_DOMAIN_NAME }}"
         STAC_API_URLS: ${{ vars.STAC_API_URLS }}
       run: |
         poetry run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
@@ -78,11 +80,15 @@ jobs:
         echo "REACT_APP_API_URL=$REACT_APP_API_URL" >> $GITHUB_ENV
         export BUCKET_NAME=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ClientBucketName' cdk-output.json)
         echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+        export DISTRIBUTION_ID=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].CloudFrontId' cdk-output.json)
+        echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
+
 
     - name: Build and deploy client app
       working-directory: client_app/src/client
       run: | 
         yarn build
         aws s3 sync ./build s3://${BUCKET_NAME}
+        aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/index.html"
     
 
