@@ -14,8 +14,6 @@ from aws_cdk import (
     aws_iam,
     aws_lambda,
     aws_logs,
-    aws_route53,
-    aws_route53_targets,
     aws_s3,
 )
 from config import AppConfig
@@ -146,28 +144,7 @@ class FederatedCollectionSearchStack(Stack):
             value=distribution.distribution_id,
         )
 
-        if app_config.client_domain_name:
-            domain_name_parts = app_config.client_domain_name.split(".")
-            domain_root = ".".join(domain_name_parts[-2:])
-            record_name = ".".join(domain_name_parts[:-2])
-
-            hosted_zone = aws_route53.HostedZone.from_lookup(
-                self, "HostedZone", domain_name=domain_root
-            )
-
-            aws_route53.ARecord(
-                self,
-                "AliasRecord",
-                record_name=record_name,
-                zone=hosted_zone,
-                target=aws_route53.RecordTarget.from_alias(
-                    aws_route53_targets.CloudFrontTarget(distribution)
-                ),
-            )
-
-            client_url = app_config.client_domain_name
-        else:
-            client_url = f"https://{distribution.distribution_domain_name}"
+        client_url = f"https://{distribution.distribution_domain_name}"
 
         CfnOutput(
             self,

@@ -14,6 +14,13 @@ on:
         description: 'federated collection discovery API version'
         required: true
         default: '0.1.0'
+    outputs:
+      success: ${{ steps.deploy.outputs.success }}
+      deployment_duration: ${{ steps.deploy.outputs.duration }}
+      api_version: ${{ github.event.inputs.api_version }}
+      api_endpoint: ${{ steps.extract_values.outputs.api_endpoint }}
+      client_file_bucket: ${{ steps.extract_values.outputs.client_file_bucket }}
+      cloudfront_distribution: ${{ steps.extract_values.outputs.cloudfront_distribution }}
 
 jobs:
   build_and_deploy:
@@ -37,6 +44,25 @@ jobs:
       with:
         node-version: 22
 
+    - name: Cache Node.js dependencies
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          node-modules-${{ runner.os }}-
+
+    - name: Cache Yarn dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          client_app/src/client/node_modules
+          client_app/src/client/.yarn
+        key: yarn-cache-${{ runner.os }}-${{ hashFiles('client_app/src/client/yarn.lock') }}
+        restore-keys: |
+          yarn-cache-${{ runner.os }}-
+
+
     - name: Install Yarn
       run: npm install -g yarn
 
@@ -58,7 +84,7 @@ jobs:
         aws-region: us-west-2
         role-to-assume: ${{ vars.DEPLOY_ROLE }}
         role-session-name: federated-collection-discovery-${{ github.event.inputs.deployment_environment }}-deploy
-
+    
     - name: Install deployment dependencies
       run: | 
         npm install
@@ -76,7 +102,19 @@ jobs:
         CLIENT_DOMAIN_NAME: "${{ vars.CLIENT_DOMAIN_NAME }}"
         STAC_API_URLS: ${{ vars.STAC_API_URLS }}
       run: |
+        start_time=$(date +%s)
         poetry run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
+        status=$?
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+        echo "success=${status}" >> $GITHUB_ENV
+        echo "duration=${duration}" >> $GITHUB_ENV
+        if [ $status -eq 0 ]; then
+          echo "CDK deploy successful."
+        else
+          echo "CDK deploy failed." >&2
+          exit 1
+        fi
         export STACK_NAME=$(jq -r 'keys_unsorted[0]' cdk-output.json)
         export REACT_APP_API_URL=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ApiEndpoint' cdk-output.json)
         echo "REACT_APP_API_URL=$REACT_APP_API_URL" >> $GITHUB_ENV
@@ -85,6 +123,10 @@ jobs:
         export DISTRIBUTION_ID=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].CloudFrontId' cdk-output.json)
         echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
 
+        echo "::set-output name=duration::${duration}"
+        echo "::set-output name=api_endpoint::${REACT_APP_API_URL}"
+        echo "::set-output name=client_file_bucket::${BUCKET_NAME}"
+        echo "::set-output name=cloudfront_distribution::${DISTRIBUTION_ID}"
 
     - name: Build and deploy client app
       working-directory: client_app/src/client
@@ -93,4 +135,9 @@ jobs:
         aws s3 sync ./build s3://${BUCKET_NAME}
         aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/index.html"
     
+    - name: Upload cdk-output.json
+      uses: actions/upload-artifact@v4
+      with:
+        name: cdk-output.json
 
+        path: cdk-output.json
