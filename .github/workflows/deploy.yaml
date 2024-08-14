@@ -24,9 +24,9 @@ jobs:
       success: ${{ steps.deploy.outputs.success }}
       deployment_duration: ${{ steps.deploy.outputs.duration }}
       api_version: ${{ github.event.inputs.api_version }}
-      api_endpoint: ${{ steps.extract_values.outputs.api_endpoint }}
-      client_file_bucket: ${{ steps.extract_values.outputs.client_file_bucket }}
-      cloudfront_distribution: ${{ steps.extract_values.outputs.cloudfront_distribution }}
+      api_endpoint: ${{ steps.deploy.outputs.api_endpoint }}
+      client_file_bucket: ${{ steps.deploy.outputs.client_file_bucket }}
+      cloudfront_distribution: ${{ steps.deploy.outputs.cloudfront_distribution }}
     
     steps:
     - name: Checkout repository
@@ -124,16 +124,17 @@ jobs:
         export DISTRIBUTION_ID=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].CloudFrontId' cdk-output.json)
         echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
 
-        echo "::set-output name=duration::${duration}"
-        echo "::set-output name=api_endpoint::${REACT_APP_API_URL}"
-        echo "::set-output name=client_file_bucket::${BUCKET_NAME}"
-        echo "::set-output name=cloudfront_distribution::${DISTRIBUTION_ID}"
+        echo "duration=${duration}" >> "$GITHUB_OUTPUT"
+        echo "api_endpoint=${REACT_APP_API_URL}" >> "$GITHUB_OUTPUT"
+        echo "client_file_bucket=${BUCKET_NAME}" >> "$GITHUB_OUTPUT"
+        echo "cloudfront_distribution=${DISTRIBUTION_ID}" >> "$GITHUB_OUTPUT"
 
     - name: Build and deploy client app
       working-directory: client_app/src/client
       run: | 
         yarn build
         aws s3 sync ./build s3://${BUCKET_NAME}
+        # invalidate existing index.html to refresh the site
         aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/index.html"
     
     - name: Upload cdk-output.json
