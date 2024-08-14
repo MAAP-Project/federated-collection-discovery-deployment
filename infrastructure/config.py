@@ -16,7 +16,7 @@ class AppConfig(BaseSettings):
     api_version: str = Field(
         description="Version of federated-collection-discovery "
         "application to install",
-        default="0.1.0",
+        default="0.1.1",
     )
     stac_api_urls: str = Field(
         description="Comma separated list of STAC API urls to include in the federated "

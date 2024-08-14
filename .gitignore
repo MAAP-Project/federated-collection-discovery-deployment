@@ -210,3 +210,6 @@ venv
 .env-cdk
 cdk.out/
 cdk-output.json
+
+# client app
+client_app/

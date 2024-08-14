@@ -8,12 +8,12 @@ on:
   workflow_dispatch:
     inputs:
       deployment_environment:
-        description: 'environment'
+        description: 'environment (either dev or test)'
         required: true
       api_version:
-        description: 'federated collection discovery API version'
+        description: 'federated collection discovery API version - must be in this [list of tags](https://github.com/developmentseed/federated-collection-discovery/tags)'
         required: true
-        default: '0.1.0'
+        default: '0.1.1'
 
 jobs:
   build_and_deploy:
@@ -39,7 +39,7 @@ jobs:
         path: client_app
         sparse-checkout: src/client
         ref: "${{ github.event.inputs.api_version }}"
- 
+
     - name: Set up node
       uses: actions/setup-node@v4
       with:
