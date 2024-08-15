@@ -1,0 +1,11 @@
+ARG PYTHON_VERSION=3.12
+
+FROM public.ecr.aws/lambda/python:${PYTHON_VERSION}
+
+WORKDIR /tmp
+ARG API_VERSION=0.1.1
+RUN python -m pip install --no-cache-dir pip -U && \
+  python -m pip install --no-cache-dir federated-collection-discovery[aws_lambda]==${API_VERSION} -t /asset --no-binary pydantic
+
+CMD ["echo", "hello world"]
+
