@@ -20,14 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: "${{ github.event.inputs.deployment_environment }}"
     
-    outputs:
-      success: ${{ steps.deploy.outputs.success }}
-      deployment_duration: ${{ steps.deploy.outputs.duration }}
-      api_version: ${{ github.event.inputs.api_version }}
-      api_endpoint: ${{ steps.deploy.outputs.api_endpoint }}
-      client_file_bucket: ${{ steps.deploy.outputs.client_file_bucket }}
-      cloudfront_distribution: ${{ steps.deploy.outputs.cloudfront_distribution }}
-    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -123,11 +115,6 @@ jobs:
         echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
         export DISTRIBUTION_ID=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].CloudFrontId' cdk-output.json)
         echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
-
-        echo "duration=${duration}" >> "$GITHUB_OUTPUT"
-        echo "api_endpoint=${REACT_APP_API_URL}" >> "$GITHUB_OUTPUT"
-        echo "client_file_bucket=${BUCKET_NAME}" >> "$GITHUB_OUTPUT"
-        echo "cloudfront_distribution=${DISTRIBUTION_ID}" >> "$GITHUB_OUTPUT"
 
     - name: Build and deploy client app
       working-directory: client_app/src/client

@@ -91,9 +91,11 @@ class FederatedCollectionSearchStack(Stack):
         client_bucket = aws_s3.Bucket(
             self,
             f"{id}-client-bucket",
+            bucket_name=f"{id}-client-bucket",
             website_index_document="index.html",
             website_error_document="index.html",
             removal_policy=RemovalPolicy.DESTROY,
+            block_public_access=aws_s3.BlockPublicAccess.BLOCK_ALL,
             auto_delete_objects=True,
         )
 
