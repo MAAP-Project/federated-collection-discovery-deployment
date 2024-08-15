@@ -122,7 +122,7 @@ jobs:
         yarn build
         aws s3 sync ./build s3://${BUCKET_NAME}
         # invalidate existing index.html to refresh the site
-        aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/index.html"
+        aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
     
     - name: Upload cdk-output.json
       uses: actions/upload-artifact@v4
