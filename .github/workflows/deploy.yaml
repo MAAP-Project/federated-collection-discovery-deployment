@@ -13,7 +13,6 @@ on:
       api_version:
         description: 'federated collection discovery API version - must be in this [list of tags](https://github.com/developmentseed/federated-collection-discovery/tags)'
         required: true
-        default: '0.1.1'
 
 jobs:
   build_and_deploy:
