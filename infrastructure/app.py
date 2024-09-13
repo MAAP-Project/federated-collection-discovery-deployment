@@ -83,7 +83,11 @@ class FederatedCollectionSearchStack(Stack):
         CfnOutput(
             self,
             "ApiEndpoint",
-            value=discovery_api.url.strip("/"),
+            value=(
+                f"https://{app_config.api_domain_name}"
+                if app_config.api_domain_name
+                else discovery_api.url.strip("/")
+            ),
         )
 
         # S3 bucket and CloudFront distribution for hosting the client application
