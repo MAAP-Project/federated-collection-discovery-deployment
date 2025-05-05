@@ -143,6 +143,7 @@ class FederatedCollectionSearchStack(Stack):
                 )
             ],
             viewer_certificate=viewer_certificate,
+            web_acl_id=app_config.web_acl_arn or None
         )
         CfnOutput(
             self,

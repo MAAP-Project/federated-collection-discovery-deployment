@@ -94,6 +94,7 @@ jobs:
         CLIENT_DOMAIN_NAME: "${{ vars.CLIENT_DOMAIN_NAME }}"
         STAC_API_URLS: ${{ vars.STAC_API_URLS }}
         CMR_URLS: ${{ vars.CMR_URLS }}
+        WEB_ACL_ARN: ${{ vars.WEB_ACL_ARN }}
       run: |
         start_time=$(date +%s)
         poetry run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json

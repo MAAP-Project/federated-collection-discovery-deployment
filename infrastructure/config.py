@@ -44,6 +44,10 @@ class AppConfig(BaseSettings):
         description="arn for the certificate for the custom domains",
         default=None,
     )
+    web_acl_arn: Optional[str] = Field(
+        description="arn for the web acl to use for the api",
+        default=None,
+    )
 
     @model_validator(mode="after")
     def validate_model(self) -> Self:
