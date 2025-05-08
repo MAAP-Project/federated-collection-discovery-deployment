@@ -101,6 +101,7 @@ class FederatedCollectionSearchStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             block_public_access=aws_s3.BlockPublicAccess.BLOCK_ALL,
             auto_delete_objects=True,
+            enforce_ssl=True,
         )
 
         client_bucket.add_to_resource_policy(
