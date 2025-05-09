@@ -101,6 +101,7 @@ class FederatedCollectionSearchStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             block_public_access=aws_s3.BlockPublicAccess.BLOCK_ALL,
             auto_delete_objects=True,
+            enforce_ssl=True,
         )
 
         client_bucket.add_to_resource_policy(
@@ -143,6 +144,14 @@ class FederatedCollectionSearchStack(Stack):
                 )
             ],
             viewer_certificate=viewer_certificate,
+            web_acl_id=app_config.web_acl_arn or None,
+            logging_config=aws_cloudfront.LoggingConfiguration(
+                bucket=aws_s3.Bucket.from_bucket_name(
+                    self, "MaapLoggingBucket", f"maap-logging-{app_config.stage}"
+                ),
+                include_cookies=False,
+                prefix="federated-search/",
+            ),
         )
         CfnOutput(
             self,
