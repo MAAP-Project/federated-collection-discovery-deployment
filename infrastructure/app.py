@@ -147,7 +147,9 @@ class FederatedCollectionSearchStack(Stack):
             web_acl_id=app_config.web_acl_arn or None,
             logging_config=aws_cloudfront.LoggingConfiguration(
                 bucket=aws_s3.Bucket.from_bucket_name(
-                    self, "MaapLoggingBucket", f"maap-logging-{app_config.stage}"
+                    self,
+                    "MaapLoggingBucket",
+                    f"maap-service-logging-{app_config.stage}",
                 ),
                 include_cookies=False,
                 prefix="federated-search/",
