@@ -42,10 +42,9 @@ class FederatedCollectionSearchStack(Stack):
                     "API_VERSION": app_config.api_version,
                 },
             ),
-            handler="federated_collection_discovery.main.handler",
+            handler="stac_fastapi.collection_discovery.app.handler",
             environment={
-                "FEDERATED_STAC_API_URLS": app_config.stac_api_urls,
-                "FEDERATED_CMR_URLS": app_config.cmr_urls,
+                "UPSTREAM_API_URLS": app_config.stac_api_urls,
             },
             memory_size=256,
             timeout=Duration.seconds(20),
