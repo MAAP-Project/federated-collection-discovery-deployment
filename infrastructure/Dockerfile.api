@@ -6,7 +6,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /tmp
 ARG API_VERSION=0.1.1
 RUN dnf install -y git
-RUN uv pip install git+https://github.com/developmentseed/stac-fastapi-collection-discovery@feat/aws-handler --compile-bytecode --no-binary pydantic --target /asset
+RUN uv pip install git+https://github.com/developmentseed/stac-fastapi-collection-discovery@feat/aws-handler[lambda] --compile-bytecode --no-binary pydantic --target /asset
 
 CMD ["echo", "hello world"]
 
