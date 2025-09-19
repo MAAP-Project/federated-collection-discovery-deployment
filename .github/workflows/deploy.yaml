@@ -28,7 +28,6 @@ jobs:
       with:
         repository: developmentseed/federated-collection-discovery
         path: client_app
-        sparse-checkout: src/client
         ref: "${{ github.event.inputs.api_version }}"
 
     - name: Set up node
@@ -48,9 +47,9 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          client_app/src/client/node_modules
-          client_app/src/client/.yarn
-        key: yarn-cache-${{ runner.os }}-${{ hashFiles('client_app/src/client/yarn.lock') }}
+          client_app/node_modules
+          client_app/.yarn
+        key: yarn-cache-${{ runner.os }}-${{ hashFiles('client_app/yarn.lock') }}
         restore-keys: |
           yarn-cache-${{ runner.os }}-
 
@@ -81,7 +80,7 @@ jobs:
       run: | 
         npm install
         poetry install
-        cd client_app/src/client
+        cd client_app
         yarn install
 
     - name: Run CDK deploy
@@ -118,7 +117,7 @@ jobs:
         echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
 
     - name: Build and deploy client app
-      working-directory: client_app/src/client
+      working-directory: client_app
       run: | 
         yarn build
         aws s3 sync ./build s3://${BUCKET_NAME}
