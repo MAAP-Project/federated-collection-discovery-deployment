@@ -109,8 +109,8 @@ jobs:
           exit 1
         fi
         export STACK_NAME=$(jq -r 'keys_unsorted[0]' cdk-output.json)
-        export REACT_APP_API_URL=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ApiEndpoint' cdk-output.json)
-        echo "REACT_APP_API_URL=$REACT_APP_API_URL" >> $GITHUB_ENV
+        export VITE_API_URL=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ApiEndpoint' cdk-output.json)
+        echo "VITE_API_URL=$VITE_API_URL" >> $GITHUB_ENV
         export BUCKET_NAME=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ClientBucketName' cdk-output.json)
         echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
         export DISTRIBUTION_ID=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].CloudFrontId' cdk-output.json)
