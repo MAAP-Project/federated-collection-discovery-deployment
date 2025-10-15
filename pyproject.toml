@@ -1,26 +1,28 @@
-[tool.poetry]
+[project]
 name = "federated-collection-discovery-deployment"
 version = "0.1.0"
 description = "AWS CDK application for deploying the Federated Collection Discovery API"
-authors = ["Henry Rodman <henry@developmentseed.org>"]
-license = "MIT"
+authors = [
+    {name = "Henry Rodman", email = "henry@developmentseed.org"}
+]
+license = {text = "MIT"}
 readme = "README.md"
-package-mode = false
+requires-python = ">=3.12"
+dependencies = []
 
-[tool.poetry.dependencies]
-python = "^3.12"
-aws-cdk-lib = "^2.151.0"
-constructs = "^10.3.0"
-pydantic = "^2.8.2"
-pydantic-settings = "^2.4.0"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.5.7"
-pre-commit = "^3.8.0"
-pytest = "^8.3.2"
-flake8 = "^7.1.1"
-mypy = "^1.11.1"
-flake8-pyproject = "^1.2.3"
+[dependency-groups]
+dev = [
+    "aws-cdk-lib>=2.220.0",
+    "constructs>=10.3.0",
+    "pydantic>=2.8.2",
+    "pydantic-settings>=2.4.0",
+    "ruff>=0.5.7",
+    "pre-commit>=3.8.0",
+    "pytest>=8.3.2",
+    "flake8>=7.1.1",
+    "mypy>=1.11.1",
+    "flake8-pyproject>=1.2.3",
+]
 
 [tool.isort]
 profile = "black"
@@ -39,6 +41,3 @@ lint.select = ["E", "F", "I"]
 [tool.flake8]
 max-line-length = 88
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

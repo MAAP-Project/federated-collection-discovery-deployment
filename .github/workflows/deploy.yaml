@@ -57,17 +57,8 @@ jobs:
     - name: Install Yarn
       run: npm install -g yarn
 
-    - name: Install Poetry
-      uses: Gr1N/setup-poetry@v9
-      with:
-        poetry-version: "1.8.0"
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-        cache: poetry
-        cache-dependency-path: poetry.lock
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
 
     - name: Assume Github OIDC role
       uses: aws-actions/configure-aws-credentials@v4
@@ -77,9 +68,9 @@ jobs:
         role-session-name: federated-collection-discovery-${{ github.event.inputs.deployment_environment }}-deploy
     
     - name: Install deployment dependencies
-      run: | 
+      run: |
         npm install
-        poetry install
+        uv sync
         cd client_app
         yarn install
 
@@ -96,7 +87,7 @@ jobs:
         WEB_ACL_ARN: ${{ vars.WEB_ACL_ARN }}
       run: |
         start_time=$(date +%s)
-        poetry run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
+        uv run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
         status=$?
         end_time=$(date +%s)
         duration=$((end_time - start_time))

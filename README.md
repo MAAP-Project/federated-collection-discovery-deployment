@@ -47,8 +47,8 @@ domain names differ between the two environments:
 The AWS infrastructure is defined in a Python CDK application.
 You can install the Python dependencies for the project with
 this command from the [`Makefile`](./Makefile)
-(requires [Node](https://nodejs.org/en/download/package-manager/current),
-, [Poetry](https://python-poetry.org/docs/#installation):
+(requires [Node](https://nodejs.org/en/download/package-manager/current)
+and [uv](https://docs.astral.sh/uv/getting-started/installation/)):
 
 ```shell
 make install
