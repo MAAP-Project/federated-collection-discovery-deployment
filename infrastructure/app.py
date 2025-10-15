@@ -49,6 +49,7 @@ class FederatedCollectionSearchStack(Stack):
             memory_size=256,
             timeout=Duration.seconds(20),
             log_retention=aws_logs.RetentionDays.ONE_WEEK,
+            snap_start=aws_lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
         )
 
         if app_config.api_domain_name and app_config.api_certificate_arn:
@@ -71,7 +72,7 @@ class FederatedCollectionSearchStack(Stack):
             f"{id}-endpoint",
             default_integration=aws_apigatewayv2_integrations.HttpLambdaIntegration(
                 f"{id}-api-integration",
-                handler=discovery_lambda,
+                handler=discovery_lambda.current_version,
             ),
             default_domain_mapping=default_domain_mapping,
         )
