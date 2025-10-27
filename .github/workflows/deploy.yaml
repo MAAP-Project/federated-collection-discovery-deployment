@@ -28,7 +28,6 @@ jobs:
       with:
         repository: developmentseed/federated-collection-discovery
         path: client_app
-        sparse-checkout: src/client
         ref: "${{ github.event.inputs.api_version }}"
 
     - name: Set up node
@@ -48,9 +47,9 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          client_app/src/client/node_modules
-          client_app/src/client/.yarn
-        key: yarn-cache-${{ runner.os }}-${{ hashFiles('client_app/src/client/yarn.lock') }}
+          client_app/node_modules
+          client_app/.yarn
+        key: yarn-cache-${{ runner.os }}-${{ hashFiles('client_app/yarn.lock') }}
         restore-keys: |
           yarn-cache-${{ runner.os }}-
 
@@ -58,17 +57,8 @@ jobs:
     - name: Install Yarn
       run: npm install -g yarn
 
-    - name: Install Poetry
-      uses: Gr1N/setup-poetry@v9
-      with:
-        poetry-version: "1.8.0"
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-        cache: poetry
-        cache-dependency-path: poetry.lock
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
 
     - name: Assume Github OIDC role
       uses: aws-actions/configure-aws-credentials@v4
@@ -78,10 +68,10 @@ jobs:
         role-session-name: federated-collection-discovery-${{ github.event.inputs.deployment_environment }}-deploy
     
     - name: Install deployment dependencies
-      run: | 
+      run: |
         npm install
-        poetry install
-        cd client_app/src/client
+        uv sync
+        cd client_app
         yarn install
 
     - name: Run CDK deploy
@@ -97,7 +87,7 @@ jobs:
         WEB_ACL_ARN: ${{ vars.WEB_ACL_ARN }}
       run: |
         start_time=$(date +%s)
-        poetry run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
+        uv run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
         status=$?
         end_time=$(date +%s)
         duration=$((end_time - start_time))
@@ -110,15 +100,15 @@ jobs:
           exit 1
         fi
         export STACK_NAME=$(jq -r 'keys_unsorted[0]' cdk-output.json)
-        export REACT_APP_API_URL=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ApiEndpoint' cdk-output.json)
-        echo "REACT_APP_API_URL=$REACT_APP_API_URL" >> $GITHUB_ENV
+        export VITE_API_URL=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ApiEndpoint' cdk-output.json)
+        echo "VITE_API_URL=$VITE_API_URL" >> $GITHUB_ENV
         export BUCKET_NAME=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ClientBucketName' cdk-output.json)
         echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
         export DISTRIBUTION_ID=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].CloudFrontId' cdk-output.json)
         echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
 
     - name: Build and deploy client app
-      working-directory: client_app/src/client
+      working-directory: client_app
       run: | 
         yarn build
         aws s3 sync ./build s3://${BUCKET_NAME}

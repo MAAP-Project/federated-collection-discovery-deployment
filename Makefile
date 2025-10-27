@@ -2,14 +2,14 @@
 install:
 	npm install
 	npm install -g yarn
-	poetry install
+	uv sync --group dev
 	pre-commit install
 
 .PHONY: deploy
 deploy:
-	poetry run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
+	uv run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
 
 
 .PHONY: destroy
 destroy:
-	poetry run npx cdk destroy --all 
+	uv run npx cdk destroy --all 

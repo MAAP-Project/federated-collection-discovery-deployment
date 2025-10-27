@@ -1,11 +1,12 @@
 ARG PYTHON_VERSION=3.12
 
-FROM public.ecr.aws/lambda/python:${PYTHON_VERSION}
+FROM --platform=linux/amd64 public.ecr.aws/lambda/python:${PYTHON_VERSION}
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /tmp
 ARG API_VERSION=0.1.1
-RUN python -m pip install --no-cache-dir pip -U && \
-  python -m pip install --no-cache-dir federated-collection-discovery[aws_lambda]==${API_VERSION} -t /asset --no-binary pydantic
+RUN dnf install -y git
+RUN uv pip install git+https://github.com/developmentseed/stac-fastapi-collection-discovery@v0.2.3[lambda] --compile-bytecode --no-binary pydantic --target /asset
 
 CMD ["echo", "hello world"]
 

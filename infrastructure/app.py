@@ -42,14 +42,14 @@ class FederatedCollectionSearchStack(Stack):
                     "API_VERSION": app_config.api_version,
                 },
             ),
-            handler="federated_collection_discovery.main.handler",
+            handler="stac_fastapi.collection_discovery.app.handler",
             environment={
-                "FEDERATED_STAC_API_URLS": app_config.stac_api_urls,
-                "FEDERATED_CMR_URLS": app_config.cmr_urls,
+                "UPSTREAM_API_URLS": app_config.stac_api_urls,
             },
             memory_size=256,
             timeout=Duration.seconds(20),
             log_retention=aws_logs.RetentionDays.ONE_WEEK,
+            snap_start=aws_lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
         )
 
         if app_config.api_domain_name and app_config.api_certificate_arn:
@@ -72,7 +72,7 @@ class FederatedCollectionSearchStack(Stack):
             f"{id}-endpoint",
             default_integration=aws_apigatewayv2_integrations.HttpLambdaIntegration(
                 f"{id}-api-integration",
-                handler=discovery_lambda,
+                handler=discovery_lambda.current_version,
             ),
             default_domain_mapping=default_domain_mapping,
         )
