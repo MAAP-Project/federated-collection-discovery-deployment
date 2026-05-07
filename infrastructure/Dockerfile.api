@@ -4,9 +4,10 @@ FROM --platform=linux/amd64 public.ecr.aws/lambda/python:${PYTHON_VERSION}
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /tmp
-ARG API_VERSION=0.1.1
+ARG API_VERSION=v0.3.0
 RUN dnf install -y git
-RUN uv pip install git+https://github.com/developmentseed/stac-fastapi-collection-discovery@v0.2.3[lambda] --compile-bytecode --no-binary pydantic --target /asset
+RUN uv pip install git+https://github.com/developmentseed/stac-fastapi-collection-discovery@${API_VERSION}[lambda] \
+  --compile-bytecode --no-binary pydantic --target /asset
 
 CMD ["echo", "hello world"]
 

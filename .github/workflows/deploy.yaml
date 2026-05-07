@@ -1,8 +1,8 @@
 name: deploy
 
 permissions:
-  id-token: write  # required for requesting the JWT
-  contents: read  # required for actions/checkout
+  id-token: write # required for requesting the JWT
+  contents: read # required for actions/checkout
 
 on:
   workflow_dispatch:
@@ -10,114 +10,110 @@ on:
       deployment_environment:
         description: 'environment (either dev or test)'
         required: true
-      api_version:
-        description: 'federated collection discovery API version - must be in this [list of tags](https://github.com/developmentseed/federated-collection-discovery/tags)'
-        required: true
-
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     environment: "${{ github.event.inputs.deployment_environment }}"
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Checkout client repository
-      uses: actions/checkout@v4
-      with:
-        repository: developmentseed/federated-collection-discovery
-        path: client_app
-        ref: "${{ github.event.inputs.api_version }}"
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+        with:
+          repository: developmentseed/federated-collection-discovery
+          path: client_app
+          ref: "${{ vars.APP_REF }}"
 
-    - name: Set up node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-    - name: Cache Node.js dependencies
-      uses: actions/cache@v4
-      with:
-        path: node_modules
-        key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          node-modules-${{ runner.os }}-
+      - name: Cache Node.js dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
 
-    - name: Cache Yarn dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          client_app/node_modules
-          client_app/.yarn
-        key: yarn-cache-${{ runner.os }}-${{ hashFiles('client_app/yarn.lock') }}
-        restore-keys: |
-          yarn-cache-${{ runner.os }}-
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            client_app/node_modules
+            client_app/.yarn
+          key: yarn-cache-${{ runner.os }}-${{ hashFiles('client_app/yarn.lock') }}
+          restore-keys: |
+            yarn-cache-${{ runner.os }}-
 
+      - name: Install Yarn
+        run: npm install -g yarn
 
-    - name: Install Yarn
-      run: npm install -g yarn
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v7
+      - name: Assume Github OIDC role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ vars.DEPLOY_ROLE }}
+          role-session-name: federated-collection-discovery-${{
+            github.event.inputs.deployment_environment }}-deploy
 
-    - name: Assume Github OIDC role
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-region: us-west-2
-        role-to-assume: ${{ vars.DEPLOY_ROLE }}
-        role-session-name: federated-collection-discovery-${{ github.event.inputs.deployment_environment }}-deploy
-    
-    - name: Install deployment dependencies
-      run: |
-        npm install
-        uv sync
-        cd client_app
-        yarn install
+      - name: Install deployment dependencies
+        run: |
+          npm install
+          uv sync
+          cd client_app
+          yarn install
 
-    - name: Run CDK deploy
-      env:
-        STAGE: "${{ github.event.inputs.deployment_environment }}"
-        API_VERSION: "${{ github.event.inputs.api_version }}"
-        API_CERTIFICATE_ARN: "${{ vars.API_CERTIFICATE_ARN }}"
-        API_DOMAIN_NAME: "${{ vars.API_DOMAIN_NAME }}"
-        CLIENT_CERTIFICATE_ARN: "${{ vars.CLIENT_CERTIFICATE_ARN }}"
-        CLIENT_DOMAIN_NAME: "${{ vars.CLIENT_DOMAIN_NAME }}"
-        STAC_API_URLS: ${{ vars.STAC_API_URLS }}
-        CMR_URLS: ${{ vars.CMR_URLS }}
-        WEB_ACL_ARN: ${{ vars.WEB_ACL_ARN }}
-      run: |
-        start_time=$(date +%s)
-        uv run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
-        status=$?
-        end_time=$(date +%s)
-        duration=$((end_time - start_time))
-        echo "success=${status}" >> $GITHUB_ENV
-        echo "duration=${duration}" >> $GITHUB_ENV
-        if [ $status -eq 0 ]; then
-          echo "CDK deploy successful."
-        else
-          echo "CDK deploy failed." >&2
-          exit 1
-        fi
-        export STACK_NAME=$(jq -r 'keys_unsorted[0]' cdk-output.json)
-        export VITE_API_URL=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ApiEndpoint' cdk-output.json)
-        echo "VITE_API_URL=$VITE_API_URL" >> $GITHUB_ENV
-        export BUCKET_NAME=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ClientBucketName' cdk-output.json)
-        echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
-        export DISTRIBUTION_ID=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].CloudFrontId' cdk-output.json)
-        echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
+      - name: Run CDK deploy
+        env:
+          STAGE: "${{ github.event.inputs.deployment_environment }}"
+          APP_VERSION: "${{ vars.APP_VERSION }}"
+          API_VERSION: "${{ vars.API_VERSION }}"
+          API_CERTIFICATE_ARN: "${{ vars.API_CERTIFICATE_ARN }}"
+          API_DOMAIN_NAME: "${{ vars.API_DOMAIN_NAME }}"
+          CLIENT_CERTIFICATE_ARN: "${{ vars.CLIENT_CERTIFICATE_ARN }}"
+          CLIENT_DOMAIN_NAME: "${{ vars.CLIENT_DOMAIN_NAME }}"
+          STAC_API_URLS: ${{ vars.STAC_API_URLS }}
+          WEB_ACL_ARN: ${{ vars.WEB_ACL_ARN }}
+        run: |
+          start_time=$(date +%s)
+          uv run npx cdk deploy --all --require-approval never --outputs-file cdk-output.json
+          status=$?
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+          echo "success=${status}" >> $GITHUB_ENV
+          echo "duration=${duration}" >> $GITHUB_ENV
+          if [ $status -eq 0 ]; then
+            echo "CDK deploy successful."
+          else
+            echo "CDK deploy failed." >&2
+            exit 1
+          fi
+          export STACK_NAME=$(jq -r 'keys_unsorted[0]' cdk-output.json)
+          export VITE_API_URL=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ApiEndpoint' cdk-output.json)
+          echo "VITE_API_URL=$VITE_API_URL" >> $GITHUB_ENV
+          export BUCKET_NAME=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].ClientBucketName' cdk-output.json)
+          echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+          export DISTRIBUTION_ID=$(jq -r --arg stack_name "$STACK_NAME" '.[$stack_name].CloudFrontId' cdk-output.json)
+          echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
 
-    - name: Build and deploy client app
-      working-directory: client_app
-      run: | 
-        yarn build
-        aws s3 sync ./build s3://${BUCKET_NAME}
-        # invalidate existing index.html to refresh the site
-        aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
-    
-    - name: Upload cdk-output.json
-      uses: actions/upload-artifact@v4
-      with:
-        name: cdk-output.json
+      - name: Build and deploy client app
+        working-directory: client_app
+        run: |
+          yarn build
+          aws s3 sync ./build s3://${BUCKET_NAME}
+          # invalidate existing index.html to refresh the site
+          aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
 
-        path: cdk-output.json
+      - name: Upload cdk-output.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: cdk-output.json
+
+          path: cdk-output.json

@@ -14,17 +14,12 @@ class AppConfig(BaseSettings):
     )
     stage: str = Field(description="Stage of deployment", default="test")
     api_version: str = Field(
-        description="Version of federated-collection-discovery "
+        description="Version of stac-fastapi-collection-discovery "
         "application to install",
         default="0.1.1",
     )
     stac_api_urls: str = Field(
         description="Comma separated list of STAC API urls to include in the federated "
-        "collection discovery app",
-        default="",
-    )
-    cmr_urls: str = Field(
-        description="Comma separated list of CMR urls to include in the federated "
         "collection discovery app",
         default="",
     )
