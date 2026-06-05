@@ -12,16 +12,16 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "aws-cdk-lib>=2.220.0",
+    "aws-cdk-lib>=2.252.0",
     "constructs>=10.3.0",
-    "pydantic>=2.8.2",
-    "pydantic-settings>=2.4.0",
-    "ruff>=0.5.7",
-    "pre-commit>=3.8.0",
-    "pytest>=8.3.2",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.0",
+    "ruff>=0.15.12",
+    "pre-commit>=4.6.0",
+    "pytest>=9.0.3",
     "flake8>=7.1.1",
-    "mypy>=1.11.1",
-    "flake8-pyproject>=1.2.3",
+    "mypy>=1.20.2",
+    "flake8-pyproject>=1.2.4",
 ]
 
 [tool.isort]
