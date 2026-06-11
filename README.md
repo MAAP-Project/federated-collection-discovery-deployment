@@ -26,8 +26,9 @@ AWS account and must be manually entered/updated to redirect requests to the
 resources in this stack.
 
 - We have to checkout the client app repo and build the React app then upload the
-contents to the S3 bucket after it is deployed. Maybe there is a better way to do
-this!
+contents to the S3 bucket after it is deployed. The deploy workflow pins Node to
+the exact version in `client_app/.nvmrc` and uses Corepack so the client build
+uses the toolchain the app expects.
 
 ## Deployment environments
 
