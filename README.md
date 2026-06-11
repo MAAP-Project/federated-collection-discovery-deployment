@@ -1,9 +1,9 @@
-# Federated Collection Discovery Deployment
+# STAC Collection Discovery Deployment for discover.maap-project.org
 
 ## About
 
 This is a deployment repo for MAAP's instance of the
-[Federated Collection Discovery application](https://github.com/developmentseed/federated-collection-discovery).
+[STAC Collection Discovery application](https://github.com/developmentseed/stac-collection-discovery).
 
 The resources get deployed to the SMCE-MAAP AWS account by the
 [`deploy`](./.github/workflows/deploy.yaml) Github Actions workflow where
@@ -12,10 +12,10 @@ API version to use.
 
 The Github Action workflow will deploy:
 
-- the Federated Collection Search API
+- the stac-fastapi-collection-discovery API
   - Lambda function with an API gateway endpoint
   - alias for a url at maap-project.org
-- the Federated Collection Search client application
+- the stac-collection-discovery client application
   - React app built by yarn and uploaded to S3, served by CloudFront
   - alias for a url at maap-project.org
 

@@ -22,7 +22,7 @@ jobs:
       - name: Checkout client repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          repository: developmentseed/federated-collection-discovery
+          repository: developmentseed/stac-collection-discovery
           path: client_app
           ref: "${{ vars.APP_REF }}"
 
